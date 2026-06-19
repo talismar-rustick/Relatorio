@@ -48,6 +48,19 @@ function processReport(data) {
         let status = row['Status'] || row['status'] || '';
         status = status.toString().trim().toLowerCase();
         
+        // --- INÍCIO DAS REGRAS DE NEGÓCIO ---
+        const statusFinalizados = ['finalizado', 'pronto pra entrega'];
+        const statusCancelados = ['cancelado', 'rejeitado', 'pedido online expirado'];
+
+        let isFinalizado = statusFinalizados.includes(status);
+        let isCancelado = statusCancelados.includes(status);
+
+        // Se o status não for nenhum dos informados na regra de negócio, ignora e pula para a próxima linha
+        if (!isFinalizado && !isCancelado) {
+            return; 
+        }
+        // --- FIM DAS REGRAS DE NEGÓCIO ---
+
         let origem = row['Origem'] || row['origem'] || '';
         origem = origem.toString().trim().toLowerCase();
         
@@ -59,15 +72,13 @@ function processReport(data) {
         let dataPedido = row['Data'] || row['data'] || '-';
         let numPedido = row['Número do Pedido'] || row['numero do pedido'] || '-';
 
-        let isFinalizado = (status === 'finalizado');
-
         if (origem === 'ifood') {
             if (isFinalizado) {
                 ifoodOrders++;
                 ifoodFrete += frete;
                 ifoodSubtotal += subtotal;
                 ifoodTotal += total;
-            } else {
+            } else if (isCancelado) {
                 ifoodCancOrders++;
                 ifoodCancFrete += frete;
                 ifoodCancSubtotal += subtotal;
@@ -81,7 +92,7 @@ function processReport(data) {
                 anotaFrete += frete;
                 anotaSubtotal += subtotal;
                 anotaTotal += total;
-            } else {
+            } else if (isCancelado) {
                 anotaCancOrders++;
                 anotaCancFrete += frete;
                 anotaCancSubtotal += subtotal;
