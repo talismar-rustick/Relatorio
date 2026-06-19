@@ -100,7 +100,6 @@ body {
 .ifood-card h3 { color: #ea1d2c; margin-bottom: 20px; border-bottom: 2px solid #fce8e9; padding-bottom: 8px;}
 .anota-card h3 { color: #007bff; margin-bottom: 20px; border-bottom: 2px solid #e6f2ff; padding-bottom: 8px;}
 
-/* Estilos dos botões na frente do título */
 .title-with-btn {
     display: flex;
     justify-content: space-between;
@@ -160,7 +159,6 @@ body {
     color: #1e293b;
 }
 
-/* Estilos da nova tabela de listagem */
 .cancelled-details {
     background: #fff;
     padding: 25px;
@@ -181,10 +179,26 @@ body {
     border-bottom: 1px solid #e2e8f0;
 }
 
+/* Alterações para o cabeçalho interativo da tabela */
 .styled-table th {
     background-color: #f8fafc;
     color: #475569;
     font-weight: bold;
+    cursor: pointer; /* Transforma a seta em "mãozinha" */
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.styled-table th:hover {
+    background-color: #e2e8f0;
+}
+
+/* Estilo e animação das setas */
+.sort-arrow {
+    display: inline-block;
+    font-size: 10px;
+    margin-left: 6px;
+    transition: transform 0.3s ease;
 }
 
 .styled-table tbody tr:hover {
