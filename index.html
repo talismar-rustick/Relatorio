@@ -5,6 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agente | Gerador de Relatório Franquia</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca para ler planilhas Excel/CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Biblioteca para criar os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Agente Gerador de Relatório</h1>
+            <p>Olá! Sou seu agente de análise de faturamento. Faça o upload da planilha de pedidos para extrair o resumo financeiro detalhado entre iFood e Anota AI (Somente pedidos Finalizados).</p>
+            
+            <div class="upload-area">
+                <label for="fileUpload" class="btn-importar">
+                    📁 Importar Planilha de Pedidos
+                </label>
+                <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" />
+            </div>
+        </header>
+
+        <!-- Área de Relatórios -->
+        <main id="dashboard" class="dashboard" style="display: none;">
+            <h2>Resumo de Faturamento</h2>
+            
+            <div class="cards">
+                <!-- Painel iFood -->
+                <div class="card ifood-card">
+                    <h3>🔴 iFood</h3>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <p class="metric-title">Volume de Pedidos</p>
+                            <p class="metric-value" id="ifood-orders">0</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="metric-title">Total Frete</p>
+                            <p class="metric-value" id="ifood-frete">R$ 0,00</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="metric-title">Subtotal</p>
+                            <p class="metric-value" id="ifood-subtotal">R$ 0,00</p>
+                        </div>
+                        <div class="metric-item full-width">
+                            <p class="metric-title">Valor Total Faturamento</p>
+                            <p class="metric-value highlight" id="ifood-total">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel Anota AI -->
+                <div class="card anota-card">
+                    <h3>🔵 Anota AI</h3>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <p class="metric-title">Volume de Pedidos</p>
+                            <p class="metric-value" id="anota-orders">0</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="metric-title">Total Frete</p>
+                            <p class="metric-value" id="anota-frete">R$ 0,00</p>
+                        </div>
+                        <div class="metric-item">
+                            <p class="metric-title">Subtotal</p>
+                            <p class="metric-value" id="anota-subtotal">R$ 0,00</p>
+                        </div>
+                        <div class="metric-item full-width">
+                            <p class="metric-title">Valor Total Faturamento</p>
+                            <p class="metric-value highlight" id="anota-total">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts">
+                <div class="chart-container">
+                    <canvas id="ordersChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente | Gerador de Relatório Franquia</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
