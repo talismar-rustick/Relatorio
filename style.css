@@ -57,7 +57,6 @@ body {
     background-color: #1d4ed8;
 }
 
-/* Alinhamento do título do dashboard com o botão de voltar/atualizar */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -137,21 +136,8 @@ body {
     color: #1e293b;
 }
 
-.charts {
-    display: flex;
-    gap: 20px;
-}
-
-.chart-container {
-    background: #fff;
-    flex: 1;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
 @media (max-width: 768px) {
-    .cards, .charts {
+    .cards {
         flex-direction: column;
     }
     .dashboard-header {
