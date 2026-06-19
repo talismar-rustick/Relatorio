@@ -1,4 +1,6 @@
+// Ouve o upload tanto na tela inicial quanto no botão do dashboard
 document.getElementById('fileUpload').addEventListener('change', handleFile, false);
+document.getElementById('fileUploadNew').addEventListener('change', handleFile, false);
 
 let ordersChartInstance = null;
 let revenueChartInstance = null;
@@ -19,7 +21,6 @@ function handleFile(e) {
     reader.readAsArrayBuffer(file);
 }
 
-// Função auxiliar para tratar formatação de moeda
 function parseMoeda(valorRaw) {
     if (typeof valorRaw === 'number') return valorRaw;
     if (typeof valorRaw === 'string') {
@@ -41,15 +42,12 @@ function processReport(data) {
     let anotaTotal = 0;
 
     data.forEach(row => {
-        // --- NOVO: FILTRO DE STATUS ---
         let status = row['Status'] || row['status'] || '';
         status = status.toString().trim().toLowerCase();
         
-        // Se o pedido não estiver finalizado, a função "return" pula essa linha sem somar nada
         if (status !== 'finalizado') {
             return; 
         }
-        // ------------------------------
 
         let origem = row['Origem'] || row['origem'] || '';
         origem = origem.toString().trim().toLowerCase();
@@ -78,6 +76,9 @@ function processReport(data) {
 }
 
 function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, anotaOrders, anotaFrete, anotaSubtotal, anotaTotal) {
+    // --- SOLUÇÃO DA DUPLICAÇÃO VISUAL ---
+    // Esconde a tela de boas-vindas inicial e exibe apenas o painel limpo
+    document.getElementById('home-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
 
     const configMoeda = { style: 'currency', currency: 'BRL' };
@@ -98,14 +99,13 @@ function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, ano
     if (ordersChartInstance) ordersChartInstance.destroy();
     if (revenueChartInstance) revenueChartInstance.destroy();
 
-    // Gráfico Atualizado (Cores: Vermelho e Azul)
     ordersChartInstance = new Chart(ctxOrders, {
         type: 'doughnut',
         data: {
             labels: ['iFood', 'Anota AI'],
             datasets: [{
                 data: [ifoodOrders, anotaOrders],
-                backgroundColor: ['#ea1d2c', '#007bff'], // Atualizado para azul
+                backgroundColor: ['#ea1d2c', '#007bff'],
                 borderWidth: 0
             }]
         },
@@ -114,7 +114,6 @@ function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, ano
         }
     });
 
-    // Gráfico Atualizado (Cores: Vermelho e Azul)
     revenueChartInstance = new Chart(ctxRevenue, {
         type: 'bar',
         data: {
@@ -122,7 +121,7 @@ function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, ano
             datasets: [{
                 label: 'Faturamento Total',
                 data: [ifoodTotal, anotaTotal],
-                backgroundColor: ['#ea1d2c', '#007bff'], // Atualizado para azul
+                backgroundColor: ['#ea1d2c', '#007bff'],
                 borderRadius: 6
             }]
         },
