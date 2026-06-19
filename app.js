@@ -1,9 +1,13 @@
 document.getElementById('fileUpload').addEventListener('change', handleFile, false);
 document.getElementById('fileUploadNew').addEventListener('change', handleFile, false);
 
-// Listas globais para guardar os detalhes dos pedidos cancelados em memória
+// Listas globais
 let listIfoodCanc = [];
 let listAnotaCanc = [];
+
+// Variáveis para controlar a ordenação
+let currentPlatformView = '';
+let currentSort = { column: '', desc: false };
 
 function handleFile(e) {
     const file = e.target.files[0];
@@ -31,35 +35,29 @@ function parseMoeda(valorRaw) {
 }
 
 function processReport(data) {
-    // Resetando as listas a cada novo upload de planilha
     listIfoodCanc = [];
     listAnotaCanc = [];
     document.getElementById('cancelled-details').style.display = 'none';
 
-    // Variáveis para pedidos FINALIZADOS
     let ifoodOrders = 0, ifoodFrete = 0, ifoodSubtotal = 0, ifoodTotal = 0;
     let anotaOrders = 0, anotaFrete = 0, anotaSubtotal = 0, anotaTotal = 0;
 
-    // Variáveis para pedidos CANCELADOS
     let ifoodCancOrders = 0, ifoodCancFrete = 0, ifoodCancSubtotal = 0, ifoodCancTotal = 0;
     let anotaCancOrders = 0, anotaCancFrete = 0, anotaCancSubtotal = 0, anotaCancTotal = 0;
 
     data.forEach(row => {
-        let status = row['Status'] || row['status'] || '';
-        status = status.toString().trim().toLowerCase();
+        let statusOriginal = row['Status'] || row['status'] || '';
+        let status = statusOriginal.toString().trim().toLowerCase();
         
-        // --- INÍCIO DAS REGRAS DE NEGÓCIO ---
         const statusFinalizados = ['finalizado', 'pronto pra entrega'];
         const statusCancelados = ['cancelado', 'rejeitado', 'pedido online expirado'];
 
         let isFinalizado = statusFinalizados.includes(status);
         let isCancelado = statusCancelados.includes(status);
 
-        // Se o status não for nenhum dos informados na regra de negócio, ignora e pula
         if (!isFinalizado && !isCancelado) {
             return; 
         }
-        // --- FIM DAS REGRAS DE NEGÓCIO ---
 
         let origem = row['Origem'] || row['origem'] || '';
         origem = origem.toString().trim().toLowerCase();
@@ -68,11 +66,9 @@ function processReport(data) {
         let subtotal = parseMoeda(row['Subtotal (Total - Valor do frete)']);
         let total = parseMoeda(row['Valor total'] || row['Valor Total']);
         
-        // Dados para a listagem
         let dataPedido = row['Data'] || row['data'] || '-';
         let numPedido = row['Número do Pedido'] || row['numero do pedido'] || '-';
 
-        // NOVA REGRA: Se for iFood é iFood, senão (qualquer outra coisa) é Anota AI
         if (origem === 'ifood') {
             if (isFinalizado) {
                 ifoodOrders++;
@@ -84,11 +80,10 @@ function processReport(data) {
                 ifoodCancFrete += frete;
                 ifoodCancSubtotal += subtotal;
                 ifoodCancTotal += total;
-                // Salva o detalhe na memória
-                listIfoodCanc.push({ data: dataPedido, numero: numPedido, valor: total });
+                // Salva o detalhe incluindo o status original
+                listIfoodCanc.push({ data: dataPedido, numero: numPedido, valor: total, motivo: statusOriginal });
             }
         } else { 
-            // Tudo o que não for iFood entra como Anota AI
             if (isFinalizado) {
                 anotaOrders++;
                 anotaFrete += frete;
@@ -99,8 +94,8 @@ function processReport(data) {
                 anotaCancFrete += frete;
                 anotaCancSubtotal += subtotal;
                 anotaCancTotal += total;
-                // Salva o detalhe na memória
-                listAnotaCanc.push({ data: dataPedido, numero: numPedido, valor: total });
+                // Salva o detalhe incluindo o status original
+                listAnotaCanc.push({ data: dataPedido, numero: numPedido, valor: total, motivo: statusOriginal });
             }
         }
     });
@@ -145,33 +140,99 @@ function renderDashboard(
     document.getElementById('anota-canc-total').innerText = anotaCancTotal.toLocaleString('pt-BR', configMoeda);
 }
 
-// Funções dos botões de "Ver pedidos"
+// Funções dos botões e Ordenação da Tabela
 document.getElementById('btn-ifood-canc').addEventListener('click', () => showCancelledList('ifood'));
 document.getElementById('btn-anota-canc').addEventListener('click', () => showCancelledList('anota'));
 
 function showCancelledList(plataforma) {
     const container = document.getElementById('cancelled-details');
     const title = document.getElementById('cancelled-details-title');
-    const tbody = document.getElementById('cancelled-details-body');
     
-    // Limpa a tabela atual para preencher com a nova
-    tbody.innerHTML = '';
+    // Reseta a ordenação se o usuário mudar a plataforma
+    if (currentPlatformView !== plataforma) {
+        currentSort = { column: '', desc: false };
+        document.querySelectorAll('.sort-arrow').forEach(el => {
+            el.style.transform = 'rotate(0deg)';
+        });
+    }
     
-    let listaAtual = [];
+    currentPlatformView = plataforma;
 
     if (plataforma === 'ifood') {
-        listaAtual = listIfoodCanc;
         title.innerText = 'Lista de Pedidos Cancelados - iFood';
     } else {
-        listaAtual = listAnotaCanc;
         title.innerText = 'Lista de Pedidos Cancelados - Anota AI';
+    }
+
+    renderTable();
+    container.style.display = 'block';
+}
+
+function sortTable(column) {
+    // Se clicou na mesma coluna, inverte a ordem; senão, começa do padrão (crescente)
+    if (currentSort.column === column) {
+        currentSort.desc = !currentSort.desc;
+    } else {
+        currentSort.column = column;
+        currentSort.desc = false;
+    }
+
+    // Rotaciona a seta correspondente e zera as outras
+    document.querySelectorAll('.sort-arrow').forEach(el => {
+        el.style.transform = 'rotate(0deg)';
+    });
+    const arrow = document.getElementById(`arrow-${column}`);
+    if (arrow) {
+        arrow.style.transform = currentSort.desc ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    renderTable();
+}
+
+function renderTable() {
+    const tbody = document.getElementById('cancelled-details-body');
+    tbody.innerHTML = '';
+    
+    // Copia a lista para não bagunçar a ordem original
+    let listaAtual = currentPlatformView === 'ifood' ? [...listIfoodCanc] : [...listAnotaCanc];
+
+    // Lógica inteligente de ordenação
+    if (currentSort.column) {
+        listaAtual.sort((a, b) => {
+            let valA = a[currentSort.column];
+            let valB = b[currentSort.column];
+
+            // Trata números (Valor e Número do pedido)
+            if (currentSort.column === 'valor' || currentSort.column === 'numero') {
+                valA = parseFloat(valA) || 0;
+                valB = parseFloat(valB) || 0;
+            } 
+            // Trata a Data (converte de DD/MM/AAAA para um formato que o sistema consegue medir o tempo)
+            else if (currentSort.column === 'data') {
+                let partsA = valA.toString().split('/');
+                let partsB = valB.toString().split('/');
+                if (partsA.length === 3 && partsB.length === 3) {
+                    valA = new Date(partsA[2], partsA[1] - 1, partsA[0]).getTime();
+                    valB = new Date(partsB[2], partsB[1] - 1, partsB[0]).getTime();
+                }
+            } 
+            // Trata texto puro (Status/Motivo)
+            else {
+                valA = valA.toString().toLowerCase();
+                valB = valB.toString().toLowerCase();
+            }
+
+            if (valA < valB) return currentSort.desc ? 1 : -1;
+            if (valA > valB) return currentSort.desc ? -1 : 1;
+            return 0;
+        });
     }
 
     const configMoeda = { style: 'currency', currency: 'BRL' };
 
     if (listaAtual.length === 0) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="3" style="text-align: center; color: #7f8c8d;">Nenhum pedido cancelado para esta plataforma.</td>`;
+        tr.innerHTML = `<td colspan="4" style="text-align: center; color: #7f8c8d;">Nenhum pedido cancelado para esta plataforma.</td>`;
         tbody.appendChild(tr);
     } else {
         listaAtual.forEach(item => {
@@ -180,11 +241,8 @@ function showCancelledList(plataforma) {
                 <td>${item.data}</td>
                 <td>${item.numero}</td>
                 <td>${item.valor.toLocaleString('pt-BR', configMoeda)}</td>
-            `;
+                <td>${item.motivo}</td> `;
             tbody.appendChild(tr);
         });
     }
-
-    // Exibe a tabela no final do ecrã
-    container.style.display = 'block';
 }
