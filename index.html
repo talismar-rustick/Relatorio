@@ -134,9 +134,10 @@
                 <table class="styled-table">
                     <thead>
                         <tr>
-                            <th>Data do Pedido</th>
-                            <th>Número de Pedido</th>
-                            <th>Valor Total</th>
+                            <th onclick="sortTable('data')">Data do Pedido <span class="sort-arrow" id="arrow-data">▼</span></th>
+                            <th onclick="sortTable('numero')">Número de Pedido <span class="sort-arrow" id="arrow-numero">▼</span></th>
+                            <th onclick="sortTable('valor')">Valor Total <span class="sort-arrow" id="arrow-valor">▼</span></th>
+                            <th onclick="sortTable('motivo')">Status <span class="sort-arrow" id="arrow-motivo">▼</span></th>
                         </tr>
                     </thead>
                     <tbody id="cancelled-details-body">
