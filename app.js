@@ -55,7 +55,7 @@ function processReport(data) {
         let isFinalizado = statusFinalizados.includes(status);
         let isCancelado = statusCancelados.includes(status);
 
-        // Se o status não for nenhum dos informados na regra de negócio, ignora e pula para a próxima linha
+        // Se o status não for nenhum dos informados na regra de negócio, ignora e pula
         if (!isFinalizado && !isCancelado) {
             return; 
         }
@@ -72,6 +72,7 @@ function processReport(data) {
         let dataPedido = row['Data'] || row['data'] || '-';
         let numPedido = row['Número do Pedido'] || row['numero do pedido'] || '-';
 
+        // NOVA REGRA: Se for iFood é iFood, senão (qualquer outra coisa) é Anota AI
         if (origem === 'ifood') {
             if (isFinalizado) {
                 ifoodOrders++;
@@ -86,7 +87,8 @@ function processReport(data) {
                 // Salva o detalhe na memória
                 listIfoodCanc.push({ data: dataPedido, numero: numPedido, valor: total });
             }
-        } else if (['site', 'whatsapp', 'compartilhamento do menu'].includes(origem)) {
+        } else { 
+            // Tudo o que não for iFood entra como Anota AI
             if (isFinalizado) {
                 anotaOrders++;
                 anotaFrete += frete;
@@ -183,6 +185,6 @@ function showCancelledList(plataforma) {
         });
     }
 
-    // Exibe a tabela no final da tela
+    // Exibe a tabela no final do ecrã
     container.style.display = 'block';
 }
