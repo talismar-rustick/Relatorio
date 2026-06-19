@@ -1,6 +1,10 @@
 document.getElementById('fileUpload').addEventListener('change', handleFile, false);
 document.getElementById('fileUploadNew').addEventListener('change', handleFile, false);
 
+// Listas globais para guardar os detalhes dos pedidos cancelados em memória
+let listIfoodCanc = [];
+let listAnotaCanc = [];
+
 function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -27,11 +31,16 @@ function parseMoeda(valorRaw) {
 }
 
 function processReport(data) {
+    // Resetando as listas a cada novo upload de planilha
+    listIfoodCanc = [];
+    listAnotaCanc = [];
+    document.getElementById('cancelled-details').style.display = 'none';
+
     // Variáveis para pedidos FINALIZADOS
     let ifoodOrders = 0, ifoodFrete = 0, ifoodSubtotal = 0, ifoodTotal = 0;
     let anotaOrders = 0, anotaFrete = 0, anotaSubtotal = 0, anotaTotal = 0;
 
-    // Variáveis para pedidos CANCELADOS (Não finalizados)
+    // Variáveis para pedidos CANCELADOS
     let ifoodCancOrders = 0, ifoodCancFrete = 0, ifoodCancSubtotal = 0, ifoodCancTotal = 0;
     let anotaCancOrders = 0, anotaCancFrete = 0, anotaCancSubtotal = 0, anotaCancTotal = 0;
 
@@ -45,8 +54,11 @@ function processReport(data) {
         let frete = parseMoeda(row['Valor do frete']);
         let subtotal = parseMoeda(row['Subtotal (Total - Valor do frete)']);
         let total = parseMoeda(row['Valor total'] || row['Valor Total']);
+        
+        // Dados para a listagem
+        let dataPedido = row['Data'] || row['data'] || '-';
+        let numPedido = row['Número do Pedido'] || row['numero do pedido'] || '-';
 
-        // Verifica se o status é finalizado
         let isFinalizado = (status === 'finalizado');
 
         if (origem === 'ifood') {
@@ -60,6 +72,8 @@ function processReport(data) {
                 ifoodCancFrete += frete;
                 ifoodCancSubtotal += subtotal;
                 ifoodCancTotal += total;
+                // Salva o detalhe na memória
+                listIfoodCanc.push({ data: dataPedido, numero: numPedido, valor: total });
             }
         } else if (['site', 'whatsapp', 'compartilhamento do menu'].includes(origem)) {
             if (isFinalizado) {
@@ -72,6 +86,8 @@ function processReport(data) {
                 anotaCancFrete += frete;
                 anotaCancSubtotal += subtotal;
                 anotaCancTotal += total;
+                // Salva o detalhe na memória
+                listAnotaCanc.push({ data: dataPedido, numero: numPedido, valor: total });
             }
         }
     });
@@ -95,7 +111,6 @@ function renderDashboard(
 
     const configMoeda = { style: 'currency', currency: 'BRL' };
 
-    // Injeta dados dos FINALIZADOS
     document.getElementById('ifood-orders').innerText = ifoodOrders;
     document.getElementById('ifood-frete').innerText = ifoodFrete.toLocaleString('pt-BR', configMoeda);
     document.getElementById('ifood-subtotal').innerText = ifoodSubtotal.toLocaleString('pt-BR', configMoeda);
@@ -106,7 +121,6 @@ function renderDashboard(
     document.getElementById('anota-subtotal').innerText = anotaSubtotal.toLocaleString('pt-BR', configMoeda);
     document.getElementById('anota-total').innerText = anotaTotal.toLocaleString('pt-BR', configMoeda);
 
-    // Injeta dados dos CANCELADOS (Não finalizados)
     document.getElementById('ifood-canc-orders').innerText = ifoodCancOrders;
     document.getElementById('ifood-canc-frete').innerText = ifoodCancFrete.toLocaleString('pt-BR', configMoeda);
     document.getElementById('ifood-canc-subtotal').innerText = ifoodCancSubtotal.toLocaleString('pt-BR', configMoeda);
@@ -116,4 +130,48 @@ function renderDashboard(
     document.getElementById('anota-canc-frete').innerText = anotaCancFrete.toLocaleString('pt-BR', configMoeda);
     document.getElementById('anota-canc-subtotal').innerText = anotaCancSubtotal.toLocaleString('pt-BR', configMoeda);
     document.getElementById('anota-canc-total').innerText = anotaCancTotal.toLocaleString('pt-BR', configMoeda);
+}
+
+// Funções dos botões de "Ver pedidos"
+document.getElementById('btn-ifood-canc').addEventListener('click', () => showCancelledList('ifood'));
+document.getElementById('btn-anota-canc').addEventListener('click', () => showCancelledList('anota'));
+
+function showCancelledList(plataforma) {
+    const container = document.getElementById('cancelled-details');
+    const title = document.getElementById('cancelled-details-title');
+    const tbody = document.getElementById('cancelled-details-body');
+    
+    // Limpa a tabela atual para preencher com a nova
+    tbody.innerHTML = '';
+    
+    let listaAtual = [];
+
+    if (plataforma === 'ifood') {
+        listaAtual = listIfoodCanc;
+        title.innerText = 'Lista de Pedidos Cancelados - iFood';
+    } else {
+        listaAtual = listAnotaCanc;
+        title.innerText = 'Lista de Pedidos Cancelados - Anota AI';
+    }
+
+    const configMoeda = { style: 'currency', currency: 'BRL' };
+
+    if (listaAtual.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="3" style="text-align: center; color: #7f8c8d;">Nenhum pedido cancelado para esta plataforma.</td>`;
+        tbody.appendChild(tr);
+    } else {
+        listaAtual.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.data}</td>
+                <td>${item.numero}</td>
+                <td>${item.valor.toLocaleString('pt-BR', configMoeda)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Exibe a tabela no final da tela
+    container.style.display = 'block';
 }
