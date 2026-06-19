@@ -19,7 +19,7 @@ function handleFile(e) {
     reader.readAsArrayBuffer(file);
 }
 
-// Função auxiliar para tratar formatação de moeda da planilha
+// Função auxiliar para tratar formatação de moeda
 function parseMoeda(valorRaw) {
     if (typeof valorRaw === 'number') return valorRaw;
     if (typeof valorRaw === 'string') {
@@ -30,23 +30,30 @@ function parseMoeda(valorRaw) {
 }
 
 function processReport(data) {
-    // Inicializadores iFood
     let ifoodOrders = 0;
     let ifoodFrete = 0;
     let ifoodSubtotal = 0;
     let ifoodTotal = 0;
 
-    // Inicializadores Anota AI
     let anotaOrders = 0;
     let anotaFrete = 0;
     let anotaSubtotal = 0;
     let anotaTotal = 0;
 
     data.forEach(row => {
+        // --- NOVO: FILTRO DE STATUS ---
+        let status = row['Status'] || row['status'] || '';
+        status = status.toString().trim().toLowerCase();
+        
+        // Se o pedido não estiver finalizado, a função "return" pula essa linha sem somar nada
+        if (status !== 'finalizado') {
+            return; 
+        }
+        // ------------------------------
+
         let origem = row['Origem'] || row['origem'] || '';
         origem = origem.toString().trim().toLowerCase();
         
-        // Mapeamento dos novos campos solicitados
         let frete = parseMoeda(row['Valor do frete']);
         let subtotal = parseMoeda(row['Subtotal (Total - Valor do frete)']);
         let total = parseMoeda(row['Valor total'] || row['Valor Total']);
@@ -73,35 +80,32 @@ function processReport(data) {
 function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, anotaOrders, anotaFrete, anotaSubtotal, anotaTotal) {
     document.getElementById('dashboard').style.display = 'block';
 
-    // Formatação de moeda PT-BR
     const configMoeda = { style: 'currency', currency: 'BRL' };
 
-    // Injeta dados do iFood na tela
     document.getElementById('ifood-orders').innerText = ifoodOrders;
     document.getElementById('ifood-frete').innerText = ifoodFrete.toLocaleString('pt-BR', configMoeda);
     document.getElementById('ifood-subtotal').innerText = ifoodSubtotal.toLocaleString('pt-BR', configMoeda);
     document.getElementById('ifood-total').innerText = ifoodTotal.toLocaleString('pt-BR', configMoeda);
     
-    // Injeta dados da Anota AI na tela
     document.getElementById('anota-orders').innerText = anotaOrders;
     document.getElementById('anota-frete').innerText = anotaFrete.toLocaleString('pt-BR', configMoeda);
     document.getElementById('anota-subtotal').innerText = anotaSubtotal.toLocaleString('pt-BR', configMoeda);
     document.getElementById('anota-total').innerText = anotaTotal.toLocaleString('pt-BR', configMoeda);
 
-    // Renderização dos Gráficos (Baseado no Faturamento Líquido/Total)
     const ctxOrders = document.getElementById('ordersChart').getContext('2d');
     const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
 
     if (ordersChartInstance) ordersChartInstance.destroy();
     if (revenueChartInstance) revenueChartInstance.destroy();
 
+    // Gráfico Atualizado (Cores: Vermelho e Azul)
     ordersChartInstance = new Chart(ctxOrders, {
         type: 'doughnut',
         data: {
             labels: ['iFood', 'Anota AI'],
             datasets: [{
                 data: [ifoodOrders, anotaOrders],
-                backgroundColor: ['#ea1d2c', '#00c853'],
+                backgroundColor: ['#ea1d2c', '#007bff'], // Atualizado para azul
                 borderWidth: 0
             }]
         },
@@ -110,6 +114,7 @@ function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, ano
         }
     });
 
+    // Gráfico Atualizado (Cores: Vermelho e Azul)
     revenueChartInstance = new Chart(ctxRevenue, {
         type: 'bar',
         data: {
@@ -117,7 +122,7 @@ function renderDashboard(ifoodOrders, ifoodFrete, ifoodSubtotal, ifoodTotal, ano
             datasets: [{
                 label: 'Faturamento Total',
                 data: [ifoodTotal, anotaTotal],
-                backgroundColor: ['#ea1d2c', '#00c853'],
+                backgroundColor: ['#ea1d2c', '#007bff'], // Atualizado para azul
                 borderRadius: 6
             }]
         },
