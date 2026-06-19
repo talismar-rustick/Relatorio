@@ -79,7 +79,10 @@
             
             <div class="cards">
                 <div class="card ifood-card">
-                    <h3>🔴 iFood (Cancelados)</h3>
+                    <h3 class="title-with-btn">
+                        <span>🔴 iFood (Cancelados)</span>
+                        <button id="btn-ifood-canc" class="btn-ver-pedidos">Ver pedidos</button>
+                    </h3>
                     <div class="metric-grid">
                         <div class="metric-item">
                             <p class="metric-title">Volume de Pedidos</p>
@@ -101,7 +104,10 @@
                 </div>
 
                 <div class="card anota-card">
-                    <h3>🔵 Anota AI (Cancelados)</h3>
+                    <h3 class="title-with-btn">
+                        <span>🔵 Anota AI (Cancelados)</span>
+                        <button id="btn-anota-canc" class="btn-ver-pedidos">Ver pedidos</button>
+                    </h3>
                     <div class="metric-grid">
                         <div class="metric-item">
                             <p class="metric-title">Volume de Pedidos</p>
@@ -121,6 +127,21 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div id="cancelled-details" class="cancelled-details" style="display: none;">
+                <h3 id="cancelled-details-title" style="color: #2c3e50; margin-bottom: 15px;">Detalhes dos Pedidos</h3>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Data do Pedido</th>
+                            <th>Número de Pedido</th>
+                            <th>Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cancelled-details-body">
+                        </tbody>
+                </table>
             </div>
 
         </main>
